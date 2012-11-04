@@ -1,0 +1,15 @@
+<p id="notice"><%= notice %></p>
+
+<p>
+  <b>Name:</b>
+  <%= @tag.name %>
+</p>
+
+<% @tag.bookmarks.each do |bookmark| -%>
+    <div>
+      <%= bookmark.url -%>
+    </div>
+  <% end -%>
+
+<%= link_to 'Edit', edit_tag_path(@tag) %> |
+<%= link_to 'Back', tags_path %>

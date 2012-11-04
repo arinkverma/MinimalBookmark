@@ -1,0 +1,167 @@
+<h1>Listing bookmarks</h1>
+
+
+
+
+<div id="searchbox">
+    <input id="search" type="text" placeholder="Enter url -OR- Tag">
+    <button id="search-input">Search</button>
+    <button id="add-input">Add</button>
+</div>
+<div id="tagbox">
+  <p><b>Tags</b> [<a href="/tags">edit</a>]</p>
+ <% Tag.all.each do |tag| -%>
+    <%= check_box_tag :tag_ids, tag.id, false, :name => 'arink[]' -%>
+    <%= label_tag :tag_ids, tag.name -%>
+ <% end -%>
+
+</div>
+<div id="resultbox">
+  <p><b>Search Results</b></p>
+<table id="bookmark-list">
+  <% @bookmarks.each do |bookmark| %>
+  <tr>
+    <td><%= bookmark.url %></td>
+    <td><%= link_to 'Show', bookmark %></td>
+    <td><%= link_to 'Edit', edit_bookmark_path(bookmark) %></td>
+    <td><%= link_to 'Destroy', bookmark, confirm: 'Are you sure?', method: :delete %></td>
+  </tr>
+
+<% end %>
+</table>
+</div>
+
+
+
+
+
+<!--<table id="friends-list">
+
+<% @bookmarks.each do |bookmark| %>
+  <tr>
+    <td><%= bookmark.url %></td>
+    <td><%= link_to 'Show', bookmark %></td>
+    <td><%= link_to 'Edit', edit_bookmark_path(bookmark) %></td>
+    <td><%= link_to 'Destroy', bookmark, confirm: 'Are you sure?', method: :delete %></td>
+  </tr>
+
+<% end %>
+</table>-->
+
+
+
+
+<script type="text/javascript">
+$(function() {
+
+BookmarkList = Backbone.Collection.extend({
+    initialize: function(){
+
+    }
+});
+
+BookmarkView = Backbone.View.extend({
+
+    events: {
+        'click #add-input':  'addBookmark',
+        'click #search-input':  'fetchBookmark',
+        'focus #search':  'showTag',
+    },
+
+    initialize: function() {
+      var original = $('#bookmark-list').val();
+        //var thisView = this;
+        /*this.bookmarkslist = new BookmarkList;
+        _.bindAll(this, 'render');
+        this.bookmarkslist.bind("add", function( model ){
+            thisView.render( model );
+        })*/
+    },
+
+     showTag: function() {
+        $('#tagbox').show();
+    },
+        hideTag: function() {
+        $('#tagbox').hide();
+    },
+
+
+    addBookmark: function() {
+        var bookmark_name = $('#search').val();
+
+        if(!bookmark_name){
+          return;
+        }
+       var list = new Array();
+$("input:checkbox[name='arink\\[\\]']:checked").each(function () {
+  list.push($(this).val());
+});
+
+
+jQuery.ajax({
+          url: '/bookmarks',
+          data: {'bookmark[url]':bookmark_name,'bookmark[tag_ids]': list,'format':'json'},
+          type: "POST",
+          success: function(data) {
+            //alert("Successful"+data);
+            console.log(data);
+            var toPrint = '<tr><td>'+ data.url+'</td>'+
+            '<td><a href="/bookmarks/'+data.id+'">Show</a></td>'+
+            '<td><a href="/bookmarks/'+data.id+'/edit">Edit</a></td>'+
+            '<td><a href="/bookmarks/'+data.id+'" data-confirm="Are you sure?" data-method="delete" rel="nofollow">Destroy</a></td></tr>'
+            $("#bookmark-list").prepend(toPrint);
+    
+            console.log('rendered')
+          },
+          failure: function() {
+            alert("Unsuccessful");
+          }
+        }); 
+
+
+
+    },
+
+
+
+
+  fetchBookmark: function() {
+
+    var tag_name = $('#search').val();
+    if(!tag_name){
+          return;
+    }
+
+    jQuery.ajax({
+      url: '/bookmark_tags/'+tag_name,
+      data: {'bookmark[url]':tag_name,'format':'json'},
+      type: "GET",
+      success: function(data) {
+        console.log(data);
+        $("#bookmark-list").empty();
+
+        $.each(data, function(index, value) { 
+
+          console.log('rendered');
+
+          var toPrint = '<tr><td>'+ value.url+'</td>'+
+          '<td><a href="/bookmarks/'+value.id+'">Show</a></td>'+
+          '<td><a href="/bookmarks/'+value.id+'/edit">Edit</a></td>'+
+          '<td><a href="/bookmarks/'+value.id+'" data-confirm="Are you sure?" data-method="delete" rel="nofollow">Destroy</a></td></tr>'
+          $("#bookmark-list").prepend(toPrint);
+        });
+      },
+      failure: function() {
+        alert("Unsuccessful");
+      }
+    }); 
+
+    },
+
+
+
+});
+
+var view = new BookmarkView({el: 'body'});
+});
+</script>

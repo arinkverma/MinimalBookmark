@@ -1,0 +1,30 @@
+<%= form_for(@bookmark) do |f| %>
+  <% if @bookmark.errors.any? %>
+    <div id="error_explanation">
+      <h2><%= pluralize(@bookmark.errors.count, "error") %> prohibited this bookmark from being saved:</h2>
+
+      <ul>
+      <% @bookmark.errors.full_messages.each do |msg| %>
+        <li><%= msg %></li>
+      <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="field">
+    <%= f.label :url %><br />
+    <%= f.text_field :url %>
+  </div>
+
+ <!-- <%= f.select :tag_ids, Tag.all.collect {|x| [x.name, x.id]}, {}, :multiple => false %>-->
+
+ <% Tag.all.each do |tag| -%>
+    <div>
+      <%= check_box_tag :tag_ids, tag.id, @bookmark.tags.include?(tag), :name => 'bookmark[tag_ids][]' -%>
+      <%= label_tag :tag_ids, tag.name -%>
+    </div>
+  <% end -%>
+  <div class="actions">
+    <%= f.submit %>
+  </div>
+<% end %>
