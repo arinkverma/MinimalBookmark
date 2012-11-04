@@ -41,6 +41,7 @@ class TagsController < ApplicationController
   # POST /tags.json
   def create
     @tag = Tag.new(params[:tag])
+    print params[:tag]
 
     respond_to do |format|
       if @tag.save

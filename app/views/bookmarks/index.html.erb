@@ -1,18 +1,25 @@
-<h1>Listing bookmarks</h1>
+<h1>Minimal Bookmark</h1>
 
+<h3>Instructions!</h3>
+<ul>
+<li><b>To add new bookmark</b>:
+<b>type</b>: url<b>,</b>tag1<b>,</b>tag2<b>,</b>tag3 [Add]
+</li><li>
+<b>To search</b>:
+<b>type</b>: tag in field and click [Search]
+</li>
+</ul>
 
 
 
 <div id="searchbox">
-    <input id="search" type="text" placeholder="Enter url -OR- Tag">
-    <button id="search-input">Search</button>
+    <input id="search" type="text" placeholder="To add <Url>,<Tag1>,<Tag2>,<Tag3>,.., | To search <Tag>">
     <button id="add-input">Add</button>
 </div>
 <div id="tagbox">
   <p><b>Tags</b> [<a href="/tags">edit</a>]</p>
  <% Tag.all.each do |tag| -%>
-    <%= check_box_tag :tag_ids, tag.id, false, :name => 'arink[]' -%>
-    <%= label_tag :tag_ids, tag.name -%>
+    <span><%= tag.name %></span>
  <% end -%>
 
 </div>
@@ -32,136 +39,145 @@
 </div>
 
 
-
-
-
-<!--<table id="friends-list">
-
-<% @bookmarks.each do |bookmark| %>
-  <tr>
-    <td><%= bookmark.url %></td>
-    <td><%= link_to 'Show', bookmark %></td>
-    <td><%= link_to 'Edit', edit_bookmark_path(bookmark) %></td>
-    <td><%= link_to 'Destroy', bookmark, confirm: 'Are you sure?', method: :delete %></td>
-  </tr>
-
-<% end %>
-</table>-->
-
-
-
-
 <script type="text/javascript">
-$(function() {
-
-BookmarkList = Backbone.Collection.extend({
-    initialize: function(){
-
+allTag = function () {
+  jQuery.ajax({
+    url: '/tags',
+    data: {
+      'format': 'json'
+    },
+    type: "get",
+    success: function (data) {
+      $("#tagbox").html('');
+      var taghtml = '<p><b>Tags</b> [<a href="/tags">edit</a>]</p>'
+      $.each(data, function (index, value) {
+        taghtml += '<span>' + value.name + '</span> ';
+      });
+      $("#tagbox").html(taghtml);
+    },
+    failure: function () {
+      alert("Unsuccessful");
     }
-});
+  });
+}
 
-BookmarkView = Backbone.View.extend({
-
+$(function () {
+  BookmarkList = Backbone.Collection.extend({
+    initialize: function () {}
+  });
+  BookmarkView = Backbone.View.extend({
     events: {
-        'click #add-input':  'addBookmark',
-        'click #search-input':  'fetchBookmark',
-        'focus #search':  'showTag',
+      'click #add-input': 'addBookmark',
+      'focus #search': 'showTag',
+      'keyup #search': 'checkType',
     },
-
-    initialize: function() {
+    initialize: function () {
       var original = $('#bookmark-list').val();
-        //var thisView = this;
-        /*this.bookmarkslist = new BookmarkList;
-        _.bindAll(this, 'render');
-        this.bookmarkslist.bind("add", function( model ){
-            thisView.render( model );
-        })*/
     },
 
-     showTag: function() {
-        $('#tagbox').show();
+    showTag: function () {
+      $('#tagbox').show();
     },
-        hideTag: function() {
-        $('#tagbox').hide();
+    hideTag: function () {
+      $('#tagbox').hide();
     },
-
-
-    addBookmark: function() {
-        var bookmark_name = $('#search').val();
-
-        if(!bookmark_name){
-          return;
-        }
-       var list = new Array();
-$("input:checkbox[name='arink\\[\\]']:checked").each(function () {
-  list.push($(this).val());
-});
-
-
-jQuery.ajax({
-          url: '/bookmarks',
-          data: {'bookmark[url]':bookmark_name,'bookmark[tag_ids]': list,'format':'json'},
-          type: "POST",
-          success: function(data) {
-            //alert("Successful"+data);
-            console.log(data);
-            var toPrint = '<tr><td>'+ data.url+'</td>'+
-            '<td><a href="/bookmarks/'+data.id+'">Show</a></td>'+
-            '<td><a href="/bookmarks/'+data.id+'/edit">Edit</a></td>'+
-            '<td><a href="/bookmarks/'+data.id+'" data-confirm="Are you sure?" data-method="delete" rel="nofollow">Destroy</a></td></tr>'
-            $("#bookmark-list").prepend(toPrint);
-    
-            console.log('rendered')
-          },
-          failure: function() {
-            alert("Unsuccessful");
-          }
-        }); 
-
-
-
-    },
-
-
-
-
-  fetchBookmark: function() {
-
-    var tag_name = $('#search').val();
-    if(!tag_name){
-          return;
-    }
-
-    jQuery.ajax({
-      url: '/bookmark_tags/'+tag_name,
-      data: {'bookmark[url]':tag_name,'format':'json'},
-      type: "GET",
-      success: function(data) {
-        console.log(data);
-        $("#bookmark-list").empty();
-
-        $.each(data, function(index, value) { 
-
-          console.log('rendered');
-
-          var toPrint = '<tr><td>'+ value.url+'</td>'+
-          '<td><a href="/bookmarks/'+value.id+'">Show</a></td>'+
-          '<td><a href="/bookmarks/'+value.id+'/edit">Edit</a></td>'+
-          '<td><a href="/bookmarks/'+value.id+'" data-confirm="Are you sure?" data-method="delete" rel="nofollow">Destroy</a></td></tr>'
-          $("#bookmark-list").prepend(toPrint);
-        });
-      },
-      failure: function() {
-        alert("Unsuccessful");
+    checkType: function () {
+      var bookmark_name = $('#search').val();
+      var tokens = bookmark_name.split(",");
+      $('#add-input').val("add");
+      if (tokens.length > 1) {
+        $('#add-input').html("Add");
+        $('#add-input').val("add");
+      } else {
+        $('#add-input').html("Search");
+        $('#add-input').val("search");
       }
-    }); 
-
+    },
+    allBookmark: function () {
+      jQuery.ajax({
+        url: '/bookmarks',
+        data: {
+          'format': 'json'
+        },
+        type: "get",
+        success: function (data) {
+          $("#bookmark-list").empty();
+          $.each(data, function (index, value) {
+            var toPrint = '<tr><td>' + value.url + '</td>' + '<td><a href="/bookmarks/' + value.id + '">Show</a></td>' + '<td><a href="/bookmarks/' + value.id + '/edit">Edit</a></td>' + '<td><a href="/bookmarks/' + value.id + '" data-confirm="Are you sure?" data-method="delete" rel="nofollow">Destroy</a></td></tr>'
+            $("#bookmark-list").prepend(toPrint);
+          });
+          console.log('rendered search list');
+          $('#add-input').val("clear");
+          $('#add-input').html("Clear");
+        },
+        failure: function () {
+          alert("Unsuccessful");
+        }
+      });
     },
 
-
-
-});
-
-var view = new BookmarkView({el: 'body'});
+    addBookmark: function () {
+      var bookmark_name = $('#search').val();
+      if (!bookmark_name) {
+        return;
+      }
+      var list = new Array();
+      $("input:checkbox[name='arink\\[\\]']:checked").each(function () {
+        list.push($(this).val());
+      });
+      var requestType = "POST";
+      if ($('#add-input').val() == "clear") {
+        requestType = "GET";
+      }
+      jQuery.ajax({
+        url: '/bookmarks',
+        data: {
+          'bookmark[url]': bookmark_name,
+          'format': 'json'
+        },
+        type: requestType,
+        success: function (data) {
+          if ($('#add-input').val() == "add") {
+            console.log(data);
+            if(data.error){
+              alert("Error: "+data.error);
+            }else{
+            var toPrint = '<tr><td>' + data.url + '</td>' + '<td><a href="/bookmarks/' + data.id + '">Show</a></td>' + '<td><a href="/bookmarks/' + data.id + '/edit">Edit</a></td>' + '<td><a href="/bookmarks/' + data.id + '" data-confirm="Are you sure?" data-method="delete" rel="nofollow">Destroy</a></td></tr>'
+            $("#bookmark-list").prepend(toPrint);
+            $('#search').val('');
+            allTag();
+          }
+          } else if ($('#add-input').val() == "search") {
+                   if(data.error){
+              alert(data.error);
+            }else{
+            $("#bookmark-list").empty();
+            $.each(data, function (index, value) {
+              var toPrint = '<tr><td>' + value.url + '</td>' + '<td><a href="/bookmarks/' + value.id + '">Show</a></td>' + '<td><a href="/bookmarks/' + value.id + '/edit">Edit</a></td>' + '<td><a href="/bookmarks/' + value.id + '" data-confirm="Are you sure?" data-method="delete" rel="nofollow">Destroy</a></td></tr>'
+              $("#bookmark-list").prepend(toPrint);
+            });
+            console.log('rendered search list');
+            $('#add-input').val("clear");
+            $('#add-input').html("Clear");
+          }
+          } else if ($('#add-input').val() == "clear") {
+            $("#bookmark-list").empty();
+            $.each(data, function (index, value) {
+              var toPrint = '<tr><td>' + value.url + '</td>' + '<td><a href="/bookmarks/' + value.id + '">Show</a></td>' + '<td><a href="/bookmarks/' + value.id + '/edit">Edit</a></td>' + '<td><a href="/bookmarks/' + value.id + '" data-confirm="Are you sure?" data-method="delete" rel="nofollow">Destroy</a></td></tr>'
+              $("#bookmark-list").prepend(toPrint);
+            });
+            console.log('rendered search list');
+          }
+        },
+        failure: function () {
+          alert("Unsuccessful");
+          console.log(data);
+        }
+      });
+    },
+  });
+  var view = new BookmarkView({
+    el: 'body'
+  });
 });
 </script>
